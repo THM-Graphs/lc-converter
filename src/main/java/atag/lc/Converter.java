@@ -1,3 +1,5 @@
+package atag.lc;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -9,13 +11,77 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
-public class Main {
+public class Converter {
 
     private static HashMap<Integer, LetterMetaData> letterMetaDataList = new HashMap<Integer, LetterMetaData>();
     private static ArrayList<JSONObject> annotationDbList = new ArrayList<JSONObject>();
     private static HashMap<Integer, Annotation> annotationIncompleteList = new HashMap<Integer, Annotation>();
     private static HashMap<Integer, Annotation> annotationCompleteList = new HashMap<Integer, Annotation>();
-    private static ArrayList<String> annotations = new ArrayList<String>();
+
+    private static final List<String> annotations = List.of(
+            //add annotation, die detektieren werden sollen
+            "|||",
+        "|",
+        "#",
+        "(",
+
+        "[t[",
+        "]t]",
+
+        "[ru[",
+        "]ru]",
+
+        "[sl[",
+        "]sl]",
+
+        "<",
+        ">",
+
+        "[$[",
+        "]$]",
+
+    //     "[rm[",
+    //    "]rm]",
+
+        "[m[",
+        "]m]",
+
+        "[c[",
+        "]c]",
+
+        "[ra[",
+        "]ra]",
+
+        "[del[",
+        "]del]",
+    //del
+
+
+    //repitition
+
+
+    //lacuna?!?
+
+
+    //unlesbar....
+
+
+            "[t[", "]t]",
+            "[ru[", "]ru]",
+            "[sl[", "]sl]",
+            "<", ">",
+            "[$[", "]$]",
+            "[rm[", "]rm]",
+            "[m[", "]m]",
+            "[c[", "]c]",
+            "[ra[", "]ra]",
+            "[del[", "]del]",
+            "#",
+            "|||",
+            "|",
+            "("
+    );
+
     private static String atomText = null;
     private static StringBuilder atomTextBuilder = null;
     private static HashMap<Integer, String> annotationList = new HashMap<Integer, String>();
@@ -40,12 +106,26 @@ public class Main {
 
 
 
-    //DB
-    private static Neo4JDatabase DB = new Neo4JDatabase();
-
     //Infos für Annotationen...
     private static Integer annoId = (Integer) 1;
     private static Integer deleteOff = (Integer) 0;
+
+
+    public void convert(String text) {
+        detectAllAnnotation(text);
+        navigateAllAnnotations();
+//        System.out.println(sortedAnnotationList);
+
+        //4. Liste mit allen startoffsets ableiten...
+        for (Map.Entry<Integer, String> entry : sortedAnnotationList.entrySet()) {
+            annotationsStartOffSets.add(entry.getKey());
+        }
+//        System.out.println(annotationsStartOffSets);
+
+        atomTextBuilder = new StringBuilder(text);
+        navigateAllAnnotations();
+    }
+
 
     public static void main(String[] args) throws IOException, ParseException {
 
@@ -54,8 +134,6 @@ public class Main {
         //1. Text lesen... und convert to string builder...
         atomText = readAtomLetters();
         System.out.println(atomText);
-        atomTextBuilder = new StringBuilder(atomText);
-        System.out.println(atomTextBuilder);
 
         //2. 5er lines eliminieren... ist glaub ich nicht mehr notwendig
         // atomTextBuilder = remove5Lines(atomTextBuilder);
@@ -63,7 +141,7 @@ public class Main {
 
         //-------------------------------------------------------------------------------------------------------------------
         //3. Alle Annotationen erkennen....
-        detectAllAnnotation(atomTextBuilder);
+        detectAllAnnotation(atomText);
         System.out.println(sortedAnnotationList);
 
         //4. Liste mit allen startoffsets ableiten...
@@ -400,7 +478,7 @@ public class Main {
                     }
 
                 }
-                //Hier wenn inside Annotation...
+                //Hier wenn inside atag.lc.Annotation...
                 else {
                     Integer tempId;
 
@@ -773,7 +851,7 @@ public class Main {
         for(JSONObject tempAnno : annotationDbList)
         {
 
-            // Annotation tempAnno2 = (Annotation) tempAnno;
+            // atag.lc.Annotation tempAnno2 = (atag.lc.Annotation) tempAnno;
             String uuidProperty = java.util.UUID.randomUUID().toString();
 
             properties.get(0);
@@ -1079,55 +1157,7 @@ public class Main {
         return endOffSet;
     }
 
-    private static void detectAllAnnotation(StringBuilder atomTextBuilder) {
-
-        //add annotation, die detektieren werden sollen
-        annotations.add("|||");
-        annotations.add("|");
-        annotations.add("#");
-        annotations.add("(");
-
-        annotations.add("[t[");
-        annotations.add("]t]");
-
-        annotations.add("[ru[");
-        annotations.add("]ru]");
-
-        annotations.add("[sl[");
-        annotations.add("]sl]");
-
-        annotations.add("<");
-        annotations.add(">");
-
-        annotations.add("[$[");
-        annotations.add("]$]");
-
-        //     annotations.add("[rm[");
-        //    annotations.add("]rm]");
-
-        annotations.add("[m[");
-        annotations.add("]m]");
-
-        annotations.add("[c[");
-        annotations.add("]c]");
-
-        annotations.add("[ra[");
-        annotations.add("]ra]");
-
-        annotations.add("[del[");
-        annotations.add("]del]");
-        //del
-
-
-        //repitition
-
-
-        //lacuna?!?
-
-
-        //unlesbar....
-
-
+    private static void detectAllAnnotation(String atomText) {
         Integer searchStartIndex = (Integer) 0;
         Integer index = (Integer) 0;
         for(int i = 0; i <annotations.size();i++ )
@@ -1138,12 +1168,12 @@ public class Main {
 
                 //index = atomTextBuilder.indexOf(annotations.get(i), searchStartIndex);  // Slight improvement
 
-                index = (Integer) atomTextBuilder.indexOf(annotations.get(i), searchStartIndex);
+                index = (Integer) atomText.indexOf(annotations.get(i), searchStartIndex);
 
                 if (index != -1) {
                     if(annotations.get(i).equals("|")) {
                         if(index!=0)
-                            if (atomTextBuilder.charAt(index - 1) != '|' && atomTextBuilder.charAt(index + 2) != '|') {
+                            if (atomText.charAt(index - 1) != '|' && atomText.charAt(index + 2) != '|') {
                                 annotationList.put(index, annotations.get(i));
                             }
                     }

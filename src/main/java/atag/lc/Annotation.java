@@ -1,3 +1,5 @@
+package atag.lc;
+
 public class Annotation {
 
     public Integer id;

@@ -1,3 +1,5 @@
+package atag.lc;
+
 public class LetterMetaData {
 
     public String FolStart;
