@@ -4,7 +4,6 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.*;
-import java.text.ParseException;
 import java.time.Instant;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -155,377 +154,184 @@ public class Converter {
         annotationIncompleteList.put(tempIdStart, annoStart);
         colNr++;
 
-        //alle annotationen durchgehen....
-        for (int i=0; i<annotationsStartOffSets.size();i++)
-        {
-            String annotationType = sortedAnnotationList.get(annotationsStartOffSets.get(i));
+        annotationsStartOffSets.forEach(annotationsStartOffset -> {
+            String annotationType = sortedAnnotationList.get(annotationsStartOffset);
+            int startOffSet = annotationsStartOffset - deleteOff;
+            System.out.printf("Start: %d, Type: %s%n", startOffSet, annotationType);
 
-            switch (annotationType) {
-                case "[t[", "]t]" -> {
-                    int startOffSet = annotationsStartOffSets.get(i) - deleteOff;
-                    int nextCount = i + 1;
-                    if (nextCount >= annotationsStartOffSets.size())
-                        nextCount = i;
+            if (isOpeningAnnotationType(annotationType)) {
+                Integer tempId = annoId++;
+                Annotation anno = new Annotation(tempId, annotationType, "", startOffSet, null, false);
+                annotationIncompleteList.put(tempId, anno);
+            } else if (isClosingAnnotationType(annotationType)) {
+                checkIncompleteListComplex("[t[", startOffSet);
+            } else {
+                int endOffSet = findEnd(startOffSet, annotationType);
 
-                    if (annotationType.equals("[t[")) {
-                        //TODO incomplete an setzen.....
-                        Integer tempId = annoId++;
-                        Annotation anno = new Annotation(tempId, annotationType, "", startOffSet, null, false);
-                        annotationIncompleteList.put(tempId, anno);
-                        atomTextBuilder.replace(startOffSet, startOffSet + annotationType.length(), "");
-                        deleteOff = (Integer) (deleteOff + 3);
-                    } else if (annotationType.equals("]t]")) {
-                        checkIncompleteListComplex("[t[", startOffSet);
-                        atomTextBuilder.replace(startOffSet, startOffSet + annotationType.length(), "");
-                        deleteOff = (Integer) (deleteOff + 3);
-                    }
+//                int nextCount = i + 1;
+//                if (nextCount >= annotationsStartOffSets.size())
+//                    nextCount = i;
 
-                }
-                case "[ru[", "]ru]" -> {
-                    int startOffSet = annotationsStartOffSets.get(i) - deleteOff;
-                    int nextCount = i + 1;
-                    if (nextCount >= annotationsStartOffSets.size())
-                        nextCount = i;
+/*
+                if (endOffSet <= (annotationsStartOffSets.get(nextCount) - deleteOff)) {
 
-                    if (annotationType.equals("[ru[")) {
-                        //TODO incomplete an setzen.....
-                        Integer tempId = annoId++;
-                        Annotation anno = new Annotation(tempId, annotationType, "", startOffSet, null, false);
-                        annotationIncompleteList.put(tempId, anno);
-                        atomTextBuilder.replace(startOffSet, startOffSet + annotationType.length(), "");
-                        deleteOff = (Integer) (deleteOff + 4);
-                    } else if (annotationType.equals("]ru]")) {
-                        checkIncompleteListComplex("[ru[", startOffSet);
-                        atomTextBuilder.replace(startOffSet, startOffSet + annotationType.length(), "");
-                        deleteOff = (Integer) (deleteOff + 4);
-                    }
+                    if (annotationType.equals("#")) {
 
-                }
-                case "[sl[", "]sl]" -> {
-                    int startOffSet = annotationsStartOffSets.get(i) - deleteOff;
-                    int nextCount = i + 1;
-                    if (nextCount >= annotationsStartOffSets.size())
-                        nextCount = i;
+                        //   System.out.println(letterNumber);
+                        if (letterNumber.equals("END"))
+                            System.exit(0);
 
-                    if (annotationType.equals("[sl[")) {
-                        //TODO incomplete an setzen.....
-                        Integer tempId = annoId++;
-                        Annotation anno = new Annotation(tempId, annotationType, "", startOffSet, null, false);
-                        annotationIncompleteList.put(tempId, anno);
-                        atomTextBuilder.replace(startOffSet, startOffSet + annotationType.length(), "");
-                        deleteOff = (Integer) (deleteOff + 4);
-                    } else if (annotationType.equals("]sl]")) {
-                        checkIncompleteListComplex("[sl[", startOffSet);
-                        atomTextBuilder.replace(startOffSet, startOffSet + annotationType.length(), "");
-                        deleteOff = (Integer) (deleteOff + 4);
-                    }
-
-                }
-                case "<", ">" -> {
-                    //  System.out.println("wahoooooooooooo");
-                    int startOffSet = annotationsStartOffSets.get(i) - deleteOff;
-                    int nextCount = i + 1;
-                    if (nextCount >= annotationsStartOffSets.size())
-                        nextCount = i;
-
-                    if (annotationType.equals("<")) {
-                        //TODO incomplete an setzen.....
-                        Integer tempId = annoId++;
-                        Annotation anno = new Annotation(tempId, annotationType, "", startOffSet, null, false);
-                        annotationIncompleteList.put(tempId, anno);
-                        atomTextBuilder.replace(startOffSet, startOffSet + annotationType.length(), "");
-                        deleteOff = (Integer) (deleteOff + 1);
-                    } else if (annotationType.equals(">")) {
-                        checkIncompleteListComplex("<", startOffSet);
-                        atomTextBuilder.replace(startOffSet, startOffSet + annotationType.length(), "");
-                        deleteOff = (Integer) (deleteOff + 1);
-                    }
-
-                }
-                case "[$[", "]$]" -> {
-                    //  System.out.println("wahoooooooooooo");
-                    int startOffSet = annotationsStartOffSets.get(i) - deleteOff;
-                    int nextCount = i + 1;
-                    if (nextCount >= annotationsStartOffSets.size())
-                        nextCount = i;
-
-                    if (annotationType.equals("[$[")) {
-                        //TODO incomplete an setzen.....
-                        Integer tempId = annoId++;
-                        Annotation anno = new Annotation(tempId, annotationType, "", startOffSet, null, false);
-                        annotationIncompleteList.put(tempId, anno);
-                        atomTextBuilder.replace(startOffSet, startOffSet + annotationType.length(), "");
-                        deleteOff = (Integer) (deleteOff + 3);
-                    } else if (annotationType.equals("]$]")) {
-                        checkIncompleteListComplex("[$[", startOffSet);
-                        atomTextBuilder.replace(startOffSet, startOffSet + annotationType.length(), "");
-                        deleteOff = (Integer) (deleteOff + 3);
-                    }
-
-                }
-                case "[rm[", "]rm]" -> {
-                    //  System.out.println("wahoooooooooooo");
-                    int startOffSet = annotationsStartOffSets.get(i) - deleteOff;
-                    int nextCount = i + 1;
-                    if (nextCount >= annotationsStartOffSets.size())
-                        nextCount = i;
-
-                    if (annotationType.equals("[rm[")) {
-                        //TODO incomplete an setzen.....
-                        Integer tempId = annoId++;
-                        Annotation anno = new Annotation(tempId, annotationType, "", startOffSet, null, false);
-                        annotationIncompleteList.put(tempId, anno);
-                        atomTextBuilder.replace(startOffSet, startOffSet + annotationType.length(), "");
-                        deleteOff = (Integer) (deleteOff + 4);
-                    } else if (annotationType.equals("]rm]")) {
-                        checkIncompleteListComplex("[rm[", startOffSet);
-                        atomTextBuilder.replace(startOffSet, startOffSet + annotationType.length(), "");
-                        deleteOff = (Integer) (deleteOff + 4);
-                    }
-
-                }
-                case "[m[", "]m]" -> {
-                    //  System.out.println("wahoooooooooooo");
-                    int startOffSet = annotationsStartOffSets.get(i) - deleteOff;
-                    int nextCount = i + 1;
-                    if (nextCount >= annotationsStartOffSets.size())
-                        nextCount = i;
-
-                    if (annotationType.equals("[m[")) {
-                        //TODO incomplete an setzen.....
-                        Integer tempId = annoId++;
-                        Annotation anno = new Annotation(tempId, annotationType, "", startOffSet, null, false);
-                        annotationIncompleteList.put(tempId, anno);
-                        atomTextBuilder.replace(startOffSet, startOffSet + annotationType.length(), "");
-                        deleteOff = (Integer) (deleteOff + 3);
-                    } else if (annotationType.equals("]m]")) {
-                        checkIncompleteListComplex("[m[", startOffSet);
-                        atomTextBuilder.replace(startOffSet, startOffSet + annotationType.length(), "");
-                        deleteOff = (Integer) (deleteOff + 3);
-                    }
-
-                }
-                case "[c[", "]c]" -> {
-                    //  System.out.println("wahoooooooooooo");
-                    int startOffSet = annotationsStartOffSets.get(i) - deleteOff;
-                    int nextCount = i + 1;
-                    if (nextCount >= annotationsStartOffSets.size())
-                        nextCount = i;
-
-                    if (annotationType.equals("[c[")) {
-                        //TODO incomplete an setzen.....
-                        Integer tempId = annoId++;
-                        Annotation anno = new Annotation(tempId, annotationType, "", startOffSet, null, false);
-                        annotationIncompleteList.put(tempId, anno);
-                        atomTextBuilder.replace(startOffSet, startOffSet + annotationType.length(), "");
-                        deleteOff = (Integer) (deleteOff + 3);
-                    } else if (annotationType.equals("]c]")) {
-                        checkIncompleteListComplex("[c[", startOffSet);
-                        atomTextBuilder.replace(startOffSet, startOffSet + annotationType.length(), "");
-                        deleteOff = (Integer) (deleteOff + 3);
-                    }
-
-                }
-                case "[ra[", "]ra]" -> {
-                    //  System.out.println("wahoooooooooooo");
-                    int startOffSet = annotationsStartOffSets.get(i) - deleteOff;
-                    int nextCount = i + 1;
-                    if (nextCount >= annotationsStartOffSets.size())
-                        nextCount = i;
-
-                    if (annotationType.equals("[ra[")) {
-                        //TODO incomplete an setzen.....
-                        Integer tempId = annoId++;
-                        Annotation anno = new Annotation(tempId, annotationType, "", startOffSet, null, false);
-                        annotationIncompleteList.put(tempId, anno);
-                        atomTextBuilder.replace(startOffSet, startOffSet + annotationType.length(), "");
-                        deleteOff = (Integer) (deleteOff + 4);
-                    } else if (annotationType.equals("]ra]")) {
-                        checkIncompleteListComplex("[ra[", startOffSet);
-                        atomTextBuilder.replace(startOffSet, startOffSet + annotationType.length(), "");
-                        deleteOff = (Integer) (deleteOff + 4);
-                    }
-
-                }
-                case "[del[", "]del]" -> {
-                    //  System.out.println("wahoooooooooooo");
-                    int startOffSet = annotationsStartOffSets.get(i) - deleteOff;
-                    int nextCount = i + 1;
-                    if (nextCount >= annotationsStartOffSets.size())
-                        nextCount = i;
-
-                    if (annotationType.equals("[del[")) {
-                        //TODO incomplete an setzen.....
-                        Integer tempId = annoId++;
-                        Annotation anno = new Annotation(tempId, annotationType, "", startOffSet, null, false);
-                        annotationIncompleteList.put(tempId, anno);
-                        atomTextBuilder.replace(startOffSet, startOffSet + annotationType.length(), "");
-                        deleteOff = (Integer) (deleteOff + 5);
-                    } else if (annotationType.equals("]del]")) {
-                        checkIncompleteListComplex("[del[", startOffSet);
-                        atomTextBuilder.replace(startOffSet, startOffSet + annotationType.length(), "");
-                        deleteOff = (Integer) (deleteOff + 5);
-                    }
-
-                }
-                default -> {
-                    int startOffSet = annotationsStartOffSets.get(i) - deleteOff;
-                    int endOffSet = findEnd(startOffSet, annotationType);
-
-                    int nextCount = i + 1;
-                    if (nextCount >= annotationsStartOffSets.size())
-                        nextCount = i;
-
-                    if (endOffSet <= (annotationsStartOffSets.get(nextCount) - deleteOff)) {
-
-                        if (annotationType.equals("#")) {
-
-                            //   System.out.println(letterNumber);
-                            if (letterNumber.equals("END"))
-                                System.exit(0);
-
-                            if (Integer.parseInt(letterNumber) >= 1) {
-                                savePreviousLetter(startOffSet, annoId, colNr);
-                                annotationCompleteList.clear();
-                            }
-                            letterNumber = extractAnnotationInformation(annotationType, startOffSet, endOffSet + 1);
-                            atomTextBuilder.replace(startOffSet, endOffSet + 1, "");
-                            deleteOff = (Integer) (deleteOff + letterNumber.length() + 2);
-                            //hier neu setzen wenn col
-
-
-                        } else if (annotationType.equals("|||")) {
-                            colNr++;
-
-                            System.out.println("Kommen wir hier her");
-                            checkIncompleteList("|", startOffSet + 1, endOffSet);
-                            checkIncompleteList("|||", startOffSet, endOffSet);
-                            atomTextBuilder.replace(startOffSet, startOffSet + annotationType.length(), "");
-                            deleteOff = (Integer) (deleteOff + annotationType.length() + 1);
-
-                        } else if (annotationType.equals("|")) {
-
-
-                            checkIncompleteList(annotationType, startOffSet, endOffSet);
-
-                            String lineText = extractAnnotationInformation(annotationType, startOffSet, endOffSet + 1);
-                            Integer tempId = annoId++;
-                            Annotation anno = new Annotation(tempId, annotationType, lineText, startOffSet, (Integer) (endOffSet - 1), false);
-                            annotationCompleteList.put(tempId, anno);
-                            atomTextBuilder.replace(startOffSet, startOffSet + 1, "");
-                            atomTextBuilder.replace(endOffSet - 1, endOffSet, "");
-                            deleteOff = (Integer) (deleteOff + 2);
-                        } else if (annotationType.equals("(")) {
-                            String erweiterungText = extractAnnotationInformation(annotationType, startOffSet, (Integer) (endOffSet + 1));
-
-                            Integer tempId = annoId++;
-                            Annotation anno = new Annotation(tempId, annotationType, erweiterungText, startOffSet, (Integer) (endOffSet - 2), false);
-                            annotationCompleteList.put(tempId, anno);
-                            //erstes und 2es...
-                            atomTextBuilder.replace(startOffSet, startOffSet + 1, "");
-                            atomTextBuilder.replace(endOffSet - 1, endOffSet, "");
-
-                            deleteOff = (Integer) (deleteOff + 2);
+                        if (Integer.parseInt(letterNumber) >= 1) {
+                            savePreviousLetter(startOffSet, annoId, colNr);
+                            annotationCompleteList.clear();
                         }
+                        letterNumber = extractAnnotationInformation(annotationType, startOffSet, endOffSet + 1);
+                        atomTextBuilder.replace(startOffSet, endOffSet + 1, "");
+                        deleteOff = (Integer) (deleteOff + letterNumber.length() + 2);
+                        //hier neu setzen wenn col
 
+
+                    } else if (annotationType.equals("|||")) {
+                        colNr++;
+
+                        System.out.println("Kommen wir hier her");
+                        checkIncompleteList("|", startOffSet + 1, endOffSet);
+                        checkIncompleteList("|||", startOffSet, endOffSet);
+                        atomTextBuilder.replace(startOffSet, startOffSet + annotationType.length(), "");
+                        deleteOff = (Integer) (deleteOff + annotationType.length() + 1);
+
+                    } else if (annotationType.equals("|")) {
+
+
+                        checkIncompleteList(annotationType, startOffSet, endOffSet);
+
+                        String lineText = extractAnnotationInformation(annotationType, startOffSet, endOffSet + 1);
+                        Integer tempId = annoId++;
+                        Annotation anno = new Annotation(tempId, annotationType, lineText, startOffSet, (Integer) (endOffSet - 1), false);
+                        annotationCompleteList.put(tempId, anno);
+                        atomTextBuilder.replace(startOffSet, startOffSet + 1, "");
+                        atomTextBuilder.replace(endOffSet - 1, endOffSet, "");
+                        deleteOff = (Integer) (deleteOff + 2);
+                    } else if (annotationType.equals("(")) {
+                        String erweiterungText = extractAnnotationInformation(annotationType, startOffSet, (Integer) (endOffSet + 1));
+
+                        Integer tempId = annoId++;
+                        Annotation anno = new Annotation(tempId, annotationType, erweiterungText, startOffSet, (Integer) (endOffSet - 2), false);
+                        annotationCompleteList.put(tempId, anno);
+                        //erstes und 2es...
+                        atomTextBuilder.replace(startOffSet, startOffSet + 1, "");
+                        atomTextBuilder.replace(endOffSet - 1, endOffSet, "");
+
+                        deleteOff = (Integer) (deleteOff + 2);
                     }
-                    //Hier wenn inside atag.lc.Annotation...
-                    else {
-                        Integer tempId;
 
-                        if (annotationType.equals("|||")) {
-                            colNr++;
+                }
+                //Hier wenn inside atag.lc.Annotation...
+                else {
+                    Integer tempId;
 
-                            if (colNr % 2 != 0) {
-                                //col hinzufügen...
-                                tempId = annoId++;
-                                System.out.println("AUF");
+                    if (annotationType.equals("|||")) {
+                        colNr++;
 
-                                if (startOffSet - 1 > 0) {
+                        if (colNr % 2 != 0) {
+                            //col hinzufügen...
+                            tempId = annoId++;
+                            System.out.println("AUF");
 
-                                    if (!atomTextBuilder.substring(startOffSet + annotationType.length(), startOffSet + annotationType.length() + 1).equals(" ")) {
-                                        columnDeleteBlank = true;
-                                    }
-                                    if (atomTextBuilder.substring(startOffSet + annotationType.length(), startOffSet + annotationType.length() + annotationType.length()).contains("#")) {
-                                        System.out.println(letterNumber + "  #.....");
-                                        columnDeleteBlank = false;
-                                        columnEndLetter = true;
-                                    }
-                                } else {
-                                    String lineText = atomTextBuilder.substring(startOffSet, startOffSet + annotationType.length() + 1);
-                                    //System.out.println("auf: " + lineText);
+                            if (startOffSet - 1 > 0) {
+
+                                if (!atomTextBuilder.substring(startOffSet + annotationType.length(), startOffSet + annotationType.length() + 1).equals(" ")) {
+                                    columnDeleteBlank = true;
                                 }
+                                if (atomTextBuilder.substring(startOffSet + annotationType.length(), startOffSet + annotationType.length() + annotationType.length()).contains("#")) {
+                                    System.out.println(letterNumber + "  #.....");
+                                    columnDeleteBlank = false;
+                                    columnEndLetter = true;
+                                }
+                            } else {
+                                String lineText = atomTextBuilder.substring(startOffSet, startOffSet + annotationType.length() + 1);
+                                //System.out.println("auf: " + lineText);
+                            }
 
-                                Annotation anno = null;
-                                Annotation annoLine = null;
-                                if (columnDeleteBlank) {
+                            Annotation anno = null;
+                            Annotation annoLine = null;
+                            if (columnDeleteBlank) {
+                                //Spalten
+                                anno = new Annotation(tempId, annotationType, null, (Integer) (startOffSet - 1), null, true);
+                                annotationIncompleteList.put(tempId, anno);
+                                //Lines
+                                tempId = annoId++;
+                                checkIncompleteList("|", startOffSet - 1, endOffSet - 1);
+                                annoLine = new Annotation(tempId, "|", null, (Integer) (startOffSet - 1), null, true);
+                                annotationIncompleteList.put(tempId, annoLine);
+                            } else {
+                                //nur machen, wenn columnEndLetter nicht endet... ansonsten das am anfang des nächstewn briefs machen...
+                                if (!columnEndLetter) {
                                     //Spalten
                                     anno = new Annotation(tempId, annotationType, null, (Integer) (startOffSet - 1), null, true);
                                     annotationIncompleteList.put(tempId, anno);
                                     //Lines
                                     tempId = annoId++;
-                                    checkIncompleteList("|", startOffSet - 1, endOffSet - 1);
-                                    annoLine = new Annotation(tempId, "|", null, (Integer) (startOffSet - 1), null, true);
+                                    checkIncompleteList("|", startOffSet, endOffSet - 1);
+                                    annoLine = new Annotation(tempId, "|", null, startOffSet, null, true);
                                     annotationIncompleteList.put(tempId, annoLine);
-                                } else {
-                                    //nur machen, wenn columnEndLetter nicht endet... ansonsten das am anfang des nächstewn briefs machen...
-                                    if (!columnEndLetter) {
-                                        //Spalten
-                                        anno = new Annotation(tempId, annotationType, null, (Integer) (startOffSet - 1), null, true);
-                                        annotationIncompleteList.put(tempId, anno);
-                                        //Lines
-                                        tempId = annoId++;
-                                        checkIncompleteList("|", startOffSet, endOffSet - 1);
-                                        annoLine = new Annotation(tempId, "|", null, startOffSet, null, true);
-                                        annotationIncompleteList.put(tempId, annoLine);
-                                    }
                                 }
-
-
-                            } else {
-
-                                //  System.out.println("ZU");
-                                System.out.println(atomTextBuilder.substring(startOffSet - 1, startOffSet + annotationType.length() + annotationType.length() + 1));
-                                if (!atomTextBuilder.substring(startOffSet - 1, startOffSet).equals(" ")) {
-                                    String lineText = atomTextBuilder.substring(startOffSet - 1, startOffSet + annotationType.length() + 1);
-                                    //       System.out.println("zu: " + lineText);
-                                    columnDeleteBlank = true;
-
-                                }
-
-                                if (columnDeleteBlank) {
-                                    checkIncompleteList(annotationType, startOffSet - 1, endOffSet + 1);
-                                    columnDeleteBlank = false;
-                                } else
-                                    checkIncompleteList(annotationType, startOffSet, endOffSet);
                             }
-                            //hier ansetzen....
-                            //text + delete offset
-                            if (!columnDeleteBlank) {
-                                atomTextBuilder.replace(startOffSet, startOffSet + annotationType.length(), "");
-                                deleteOff = (Integer) (deleteOff + annotationType.length());
-                            } else {
-                                atomTextBuilder.replace(startOffSet - 1, startOffSet + annotationType.length(), "");
-                                deleteOff = (Integer) (deleteOff + annotationType.length() + 1);
-                                // System.out.println("del....");
-                                columnDeleteBlank = false;
-                            }
+
 
                         } else {
-                            checkIncompleteList(annotationType, startOffSet, endOffSet);
-                            tempId = annoId++;
-                            Annotation anno = new Annotation(tempId, annotationType, null, startOffSet, null, true);
 
-                            annotationIncompleteList.put(tempId, anno);
+                            //  System.out.println("ZU");
+                            System.out.println(atomTextBuilder.substring(startOffSet - 1, startOffSet + annotationType.length() + annotationType.length() + 1));
+                            if (!atomTextBuilder.substring(startOffSet - 1, startOffSet).equals(" ")) {
+                                String lineText = atomTextBuilder.substring(startOffSet - 1, startOffSet + annotationType.length() + 1);
+                                //       System.out.println("zu: " + lineText);
+                                columnDeleteBlank = true;
+
+                            }
+
+                            if (columnDeleteBlank) {
+                                checkIncompleteList(annotationType, startOffSet - 1, endOffSet + 1);
+                                columnDeleteBlank = false;
+                            } else
+                                checkIncompleteList(annotationType, startOffSet, endOffSet);
+                        }
+                        //hier ansetzen....
+                        //text + delete offset
+                        if (!columnDeleteBlank) {
                             atomTextBuilder.replace(startOffSet, startOffSet + annotationType.length(), "");
                             deleteOff = (Integer) (deleteOff + annotationType.length());
+                        } else {
+                            atomTextBuilder.replace(startOffSet - 1, startOffSet + annotationType.length(), "");
+                            deleteOff = (Integer) (deleteOff + annotationType.length() + 1);
+                            // System.out.println("del....");
+                            columnDeleteBlank = false;
                         }
 
-                    }
-                }
-            }
+                    } else {
+                        checkIncompleteList(annotationType, startOffSet, endOffSet);
+                        tempId = annoId++;
+                        Annotation anno = new Annotation(tempId, annotationType, null, startOffSet, null, true);
 
-        }
+                        annotationIncompleteList.put(tempId, anno);
+                    }
+
+                }
+*/
+
+            }
+            atomTextBuilder.replace(startOffSet, startOffSet + annotationType.length(), "");
+            deleteOff += annotationType.length();
+
+        });
+    }
+
+    private boolean isClosingAnnotationType(String annotationType) {
+        return annotationType.contains(">") || annotationType.contains("]");
+    }
+
+    private boolean isOpeningAnnotationType(String annotationType) {
+        return annotationType.contains("<") || annotationType.contains("[");
     }
 
 
@@ -874,146 +680,19 @@ public class Converter {
         return annoText;
     }
 
-
     private void checkIncompleteListComplex(String annotationType, Integer endOffSet) {
-        Integer deleteIndex= (Integer) 0;
-        if(annotationType.equals("[t["))
-        {
-            for(Map.Entry<Integer, Annotation> tempAnno : annotationIncompleteList.entrySet()) {
-                if (tempAnno.getValue().type.equals("[t[")) {
-                    Annotation anno = tempAnno.getValue();
-                    anno.text = atomTextBuilder.substring(anno.startOff, endOffSet);
-                    //   System.out.println(anno.text);
-                    anno.endOff = (Integer) (endOffSet-1);
-                    annotationCompleteList.put(anno.id,anno);
-                    deleteIndex = tempAnno.getKey();
-                    break;
-                }
-            }
-        }
-        else if(annotationType.equals("[ru["))
-        {
-            for(Map.Entry<Integer, Annotation> tempAnno : annotationIncompleteList.entrySet()) {
-                if (tempAnno.getValue().type.equals("[ru[")) {
-                    Annotation anno = tempAnno.getValue();
-                    anno.text = atomTextBuilder.substring(anno.startOff, endOffSet);
-                    //    System.out.println(anno.text);
-                    anno.endOff = (Integer) (endOffSet-1);
-                    annotationCompleteList.put(anno.id,anno);
-                    deleteIndex = tempAnno.getKey();
-                    break;
-                }
-            }
-        }
-        else if(annotationType.equals("[sl["))
-        {
-            for(Map.Entry<Integer, Annotation> tempAnno : annotationIncompleteList.entrySet()) {
-                if (tempAnno.getValue().type.equals("[sl[")) {
-                    Annotation anno = tempAnno.getValue();
-                    anno.text = atomTextBuilder.substring(anno.startOff, endOffSet);
-                    //     System.out.println(anno.text);
-                    anno.endOff = (Integer) (endOffSet-1);
-                    annotationCompleteList.put(anno.id,anno);
-                    deleteIndex = tempAnno.getKey();
-                    break;
-                }
-            }
-        }
-        else if(annotationType.equals("<"))
-        {
-            for(Map.Entry<Integer, Annotation> tempAnno : annotationIncompleteList.entrySet()) {
-                if (tempAnno.getValue().type.equals("<")) {
-                    Annotation anno = tempAnno.getValue();
-                    anno.text = atomTextBuilder.substring(anno.startOff, endOffSet);
-                    // System.out.println(anno.text);
-                    anno.endOff = (Integer) (endOffSet-1);
-                    annotationCompleteList.put(anno.id,anno);
-                    deleteIndex = tempAnno.getKey();
-                    break;
-                }
-            }
-        }
-        else if(annotationType.equals("[$["))
-        {
-            for(Map.Entry<Integer, Annotation> tempAnno : annotationIncompleteList.entrySet()) {
-                if (tempAnno.getValue().type.equals("[$[")) {
-                    Annotation anno = tempAnno.getValue();
-                    anno.text = atomTextBuilder.substring(anno.startOff, endOffSet);
-                    System.out.println(anno.text);
-                    anno.endOff = (Integer) (endOffSet-1);
-                    annotationCompleteList.put(anno.id,anno);
-                    deleteIndex = tempAnno.getKey();
-                    break;
-                }
-            }
-        }
-        else if(annotationType.equals("[rm["))
-        {
-            for(Map.Entry<Integer, Annotation> tempAnno : annotationIncompleteList.entrySet()) {
-                if (tempAnno.getValue().type.equals("[rm[")) {
-                    Annotation anno = tempAnno.getValue();
-                    anno.text = atomTextBuilder.substring(anno.startOff, endOffSet);
-                    System.out.println(anno.text);
-                    anno.endOff = (Integer) (endOffSet-1);
-                    annotationCompleteList.put(anno.id,anno);
-                    deleteIndex = tempAnno.getKey();
-                    break;
-                }
-            }
-        }
-        else if(annotationType.equals("[m["))
-        {
-            for(Map.Entry<Integer, Annotation> tempAnno : annotationIncompleteList.entrySet()) {
-                if (tempAnno.getValue().type.equals("[m[")) {
-                    Annotation anno = tempAnno.getValue();
-                    anno.text = atomTextBuilder.substring(anno.startOff, endOffSet);
-                    System.out.println(anno.text);
-                    anno.endOff = (Integer) (endOffSet-1);
-                    annotationCompleteList.put(anno.id,anno);
-                    deleteIndex = tempAnno.getKey();
-                    break;
-                }
-            }
-        }
-        else if(annotationType.equals("[c["))
-        {
-            for(Map.Entry<Integer, Annotation> tempAnno : annotationIncompleteList.entrySet()) {
-                if (tempAnno.getValue().type.equals("[c[")) {
-                    Annotation anno = tempAnno.getValue();
-                    anno.text = atomTextBuilder.substring(anno.startOff, endOffSet);
-                    System.out.println(anno.text);
-                    anno.endOff = (Integer) (endOffSet-1);
-                    annotationCompleteList.put(anno.id,anno);
-                    deleteIndex = tempAnno.getKey();
-                    break;
-                }
-            }
-        }
-        else if(annotationType.equals("[ra["))
-        {
-            for(Map.Entry<Integer, Annotation> tempAnno : annotationIncompleteList.entrySet()) {
-                if (tempAnno.getValue().type.equals("[ra[")) {
-                    Annotation anno = tempAnno.getValue();
-                    anno.text = atomTextBuilder.substring(anno.startOff, endOffSet);
-                    System.out.println(anno.text);
-                    anno.endOff = (Integer) (endOffSet-1);
-                    annotationCompleteList.put(anno.id,anno);
-                    deleteIndex = tempAnno.getKey();
-                    break;
-                }
-            }
-        }
-        else if(annotationType.equals("[del["))
-        {
-            for(Map.Entry<Integer, Annotation> tempAnno : annotationIncompleteList.entrySet()) {
-                if (tempAnno.getValue().type.equals("[del[")) {
-                    Annotation anno = tempAnno.getValue();
-                    anno.text = atomTextBuilder.substring(anno.startOff, endOffSet);
-                    System.out.println(anno.text);
-                    anno.endOff = (Integer) (endOffSet-1);
-                    annotationCompleteList.put(anno.id,anno);
-                    deleteIndex = tempAnno.getKey();
-                    break;
+        int deleteIndex= 0;
+        switch (annotationType) {
+            case "[t[", "[ru[", "[sl[", "<", "[$[", "[rm[", "[m[", "[c[", "[ra[", "[del[" -> {
+                for(Map.Entry<Integer, Annotation> tempAnno : annotationIncompleteList.entrySet()) {
+                    if (tempAnno.getValue().type.equals(annotationType)) {
+                        Annotation anno = tempAnno.getValue();
+                        anno.text = atomTextBuilder.substring(anno.startOff, endOffSet);
+                        anno.endOff = endOffSet-1;
+                        annotationCompleteList.put(anno.id,anno);
+                        deleteIndex = tempAnno.getKey();
+                        break;
+                    }
                 }
             }
         }
@@ -1078,25 +757,15 @@ public class Converter {
         annotationIncompleteList.remove((Integer) deleteIndex);
     }
 
-    private static int findEnd(Integer startOff, String annotationType) {
-        //  System.out.println("searchend...: "+annotationType);
-        int endOffSet = 0;
-        if(annotationType.equals("|||"))
-        {
-            endOffSet = atomTextBuilder.indexOf("|||",startOff+annotationType.length());
-        }
-        else if (annotationType.equals("|"))
-        {
-            endOffSet = atomTextBuilder.indexOf("|",startOff+annotationType.length());
-        }
-        else if (annotationType.equals("("))
-        {
-            endOffSet = atomTextBuilder.indexOf(")",startOff+annotationType.length());
-        }
-        else if(annotationType.equals("#"))
-            endOffSet = atomTextBuilder.indexOf("#",startOff+annotationType.length());
-
-        return endOffSet;
+    private int findEnd(int startOff, String annotationType) {
+        String search = switch (annotationType) {
+            case "|||" -> "|||";
+            case "|" -> "|";
+            case "(" -> ")";
+            case "#" -> "#";
+            default -> "";
+        };
+        return atomTextBuilder.indexOf(search, startOff+annotationType.length());
     }
 
     private SortedMap<Integer, String> detectAllAnnotation(String atomText) {
