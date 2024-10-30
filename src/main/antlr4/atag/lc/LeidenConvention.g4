@@ -26,15 +26,36 @@ ADDITION_START : '[rm[';
 ADDITION_END   : ']rm]';
 HEAD_START : '[t[';
 HEAD_END   : ']t]';
+TRANSPOSITION_START : '[$[';
+TRANSPOSITION_END   : ']$]';
+COMMENT:  '§§';
 
 GAP : '[lacuna]';
+COLUMN : '|||';
 LINEBREAK : '|';
 
-WORD : ('a'..'z'|'A'..'Z'|'0'..'9') +;
-NEWLINE             : ('\r'? '\n' | '\r')+ ;
+WORD :  [A-Za-z0-9]+ ;
+//WORD : ('a'..'z'|'A'..'Z'|'0'..'9') +;
+//NEWLINE             : ('\r'? '\n' | '\r')+ ;
 WHITESPACE          : (' ' | '\t') ;
-SEPARATOR           : '.' | ',' |'?' | '!' ;
+SEPARATOR           : '.' | ',' |'?' | '!' | '-' | ':' | ';' | '*' | '>';
+
+
+//SPECIAL : '[' | ']' | '(' | ')' | '{' | '}' | '<' | '>' | '|' | '.' | ',' |'?' | '!' | '#' ;
+NEWLINE             : ('\r'? '\n' | '\r')+ ;
+//WHITESPACE          : (' ' | '\t') ;
+//ANY: . ;
+
 /* parser rules */
+
+
+doc     : comment? blocks EOF ;
+comment: COMMENT WHITESPACE (WORD | WHITESPACE | SEPARATOR)+ WHITESPACE COMMENT NEWLINE;
+blocks  : block+ ;
+//block      : ( WORD | WHITESPACE | SEPARATOR | LINEBREAK | NEWLINE | page | emphasised | expanded | nonlinear | marginnote | internention | inrasura | deleted | unreadable | repeated | intervention | addition | head | GAP  )+ ;
+block      : ( annotation | COLUMN | WORD | WHITESPACE | LINEBREAK | SEPARATOR | page | GAP | NEWLINE)+ ;
+
+annotation : emphasised | expanded | nonlinear | marginnote | internention | inrasura | deleted | unreadable | repeated | intervention | addition | head | transposition;
 
 emphasised    : EMPHASISED_START block EMPHASISED_END  ;
 expanded   : EXPANDED_START block EXPANDED_END ;
@@ -49,7 +70,4 @@ intervention        : INTERVENTION_START block INTERVENTION_END ;
 addition: ADDITION_START block ADDITION_END ;
 head   : HEAD_START block HEAD_END ;
 page    : '#' WORD '#';
-block      : ( WORD | WHITESPACE | SEPARATOR | LINEBREAK | page | emphasised | expanded | nonlinear | marginnote | internention | inrasura | deleted | unreadable | repeated | intervention | addition | head | GAP )+ ;
-
-//doc        : block+ NEWLINE? EOF ;
-
+transposition: TRANSPOSITION_START block TRANSPOSITION_END;
