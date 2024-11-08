@@ -1,5 +1,8 @@
 package atag.lc;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -11,6 +14,10 @@ public record CharactersAndAnnotations(
 ) {
     public CharactersAndAnnotations(AnnotationRecord annotation) {
         this(new LinkedList<>(), List.of(annotation));
+    }
+
+    public CharactersAndAnnotations(List<AnnotationRecord> annotations) {
+        this(new LinkedList<>(), annotations);
     }
 
     public CharactersAndAnnotations(String textAsString) {
@@ -27,5 +34,12 @@ public record CharactersAndAnnotations(
 
     public String asString() {
         return text.stream().map(String::valueOf).collect(Collectors.joining());
+    }
+
+    public JSONObject toJson() {
+        JSONObject json = new JSONObject();
+        json.put("text", asString());
+        json.put("annotations", new JSONArray(annotations.stream().map(a -> a.toAnnotationPositionRecord(text())).map(AnnotationPositionRecord::toJson).toList()));
+        return json;
     }
 }

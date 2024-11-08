@@ -28,19 +28,19 @@ public class AtagVisitor extends LeidenConventionBaseVisitor<CharactersAndAnnota
      * see https://github.com/THM-Graphs/knowledgebase/blob/main/ATAGAnnotations/Annotationslegende.md
      */
     private final Map<Class<? extends ParserRuleContext>, Props> annotationProps = Map.ofEntries(
-            Map.entry(EmphasisedContext.class, new Props(false, "rubricated")),
-            Map.entry(ExpandedContext.class, new Props(false, "expansion")),
-            Map.entry(NonlinearContext.class, new Props(false, "aboveLine")),
-            Map.entry(MarginnoteContext.class, new Props(false, "marginNote")),
+            Map.entry(EmphasisedContext.class, new Props(true, "rubricated")),
+            Map.entry(ExpandedContext.class, new Props(true, "expansion")),
+            Map.entry(NonlinearContext.class, new Props(true, "aboveLine")),
+            Map.entry(MarginnoteContext.class, new Props(true, "marginNote")),
             Map.entry(InternentionContext.class, new Props(true, "inPlace")),
-            Map.entry(InrasuraContext.class, new Props(false, "inRasura")),
+            Map.entry(InrasuraContext.class, new Props(true, "inRasura")),
             Map.entry(DeletedContext.class, new Props(false, "deleted")),
-            Map.entry(UnreadableContext.class, new Props(false, "unclear")),
-            Map.entry(RepeatedContext.class, new Props(false, "repeated")),
-//            Map.entry(LeidenConventionParser.Gap.class, new Props(false, "")),
+            Map.entry(UnreadableContext.class, new Props(true, "unclear")),
+            Map.entry(RepeatedContext.class, new Props(true, "repeated")),
+//            Map.entry(LeidenConventionParser.Gap.class, new Props(true, "")),
             Map.entry(InterventionContext.class, new Props(true, "correction")),
             Map.entry(AdditionContext.class, new Props(true, "addition")),
-            Map.entry(HeadContext.class, new Props(false, "head"))
+            Map.entry(HeadContext.class, new Props(true, "head"))
     );
 
     /*    @Override
@@ -104,6 +104,7 @@ public class AtagVisitor extends LeidenConventionBaseVisitor<CharactersAndAnnota
             return switch ( node.getSymbol().getType()) {
                 case WORD:
                 case WHITESPACE:
+                case SEPARATOR:
                     List<UChar> chars = node.getText().chars().mapToObj(i -> (char)i).map(UChar::new).toList();
                     yield new CharactersAndAnnotations(chars, Collections.emptyList());
                 default:
@@ -177,7 +178,10 @@ public class AtagVisitor extends LeidenConventionBaseVisitor<CharactersAndAnnota
         int endOffset = currentOffset + length;
         currentOffset = endOffset;
         List<UChar> text = content.text();
-        return aggregateResult(content, new CharactersAndAnnotations(new AnnotationRecord(null, props.atagType, content.asString(), text.get(0), text.get(text.size()-1))));
+        return aggregateResult(
+                props.additionalText ? content : new CharactersAndAnnotations(content.annotations()),
+                new CharactersAndAnnotations(new AnnotationRecord(null, props.atagType, content.asString(), text.get(0), text.get(text.size()-1)))
+        );
     }
 
 //    @Override
