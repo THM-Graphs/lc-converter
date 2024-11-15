@@ -28,10 +28,10 @@ public class AtagVisitor extends LeidenConventionBaseVisitor<CharactersAndAnnota
      * see https://github.com/THM-Graphs/knowledgebase/blob/main/ATAGAnnotations/Annotationslegende.md
      */
     private final Map<Class<? extends ParserRuleContext>, Props> annotationProps = Map.ofEntries(
-            Map.entry(EmphasisedContext.class, new Props(true, "rubricated")),
+            Map.entry(EmphasisedContext.class, new Props(true, "emphasised")),
             Map.entry(ExpandedContext.class, new Props(true, "expansion")),
             Map.entry(NonlinearContext.class, new Props(true, "aboveLine")),
-            Map.entry(MarginnoteContext.class, new Props(true, "marginNote")),
+            Map.entry(MarginnoteContext.class, new Props(true, "nonLinear")),
             Map.entry(InternentionContext.class, new Props(true, "inPlace")),
             Map.entry(InrasuraContext.class, new Props(true, "inRasura")),
             Map.entry(DeletedContext.class, new Props(false, "deleted")),

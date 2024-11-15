@@ -1,7 +1,5 @@
 package atag.lc;
 
-import org.json.JSONObject;
-
 import java.util.List;
 
 public record AnnotationRecord(
@@ -12,6 +10,15 @@ public record AnnotationRecord(
         UChar end) {
 
     public AnnotationPositionRecord toAnnotationPositionRecord(List<UChar> fullText) {
-        return new AnnotationPositionRecord(id, type, text, fullText.indexOf(start), fullText.indexOf(end));
+        int startIndex = fullText.indexOf(start);
+        if (startIndex == -1) {
+            startIndex = fullText.indexOf(start.getPrevious());
+        }
+
+        int endIndex = fullText.indexOf(end);
+        if (endIndex == -1) {
+            endIndex = fullText.indexOf(end.getNext());
+        }
+        return new AnnotationPositionRecord(id, type, text, startIndex, endIndex);
     }
 }
